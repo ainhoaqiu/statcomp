@@ -28,8 +28,9 @@ Load the required R packages
 ```{r, warning=FALSE}
 library(corrplot)
 library(coefplot)
-library(ggpubr)
 library(gapminder)
+library(ggpubr)
+library(gtsummary)
 library(hexbin)
 library(modelr)
 library(multcomp)
@@ -325,6 +326,16 @@ source('../code/routines.R') #change path to directory where routines.R is store
 Note: [tidymodels](https://www.tidymodels.org) and [parsnip](https://parsnip.tidymodels.org) provide a unified interface for many statistical/machine learning models
 
 Note: R package `caret` does as well (see an [introduction](https://topepo.github.io/caret))
+
+
+## gtsummary
+
+`gtsummary` has function `tbl_regression` to nicely format regression output
+
+```{r}
+tbl_regression(lmfit2) |>
+  add_global_p()   # add overall P-value for categorical covariates
+```
 
 
 ## Plotting intervals
