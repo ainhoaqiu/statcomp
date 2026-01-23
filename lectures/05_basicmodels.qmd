@@ -113,12 +113,12 @@ $\hat{\beta}_j \pm 1.96 \sqrt{v_{jj}}$
 
 Sometimes we're interested in linear combinations of parameters
 
-**Result.** Let $Z \sim N(\mu, V)$ be a $p$-dimensional Normal distribution, and
+**Result.** Let $Z \sim N(\mu, V)$ be a $p$-dimensional Gaussian vector, and
 $C$ a $q \times p$ matrix with full rank $q \leq p$. Then
 $$
 W= C Z \sim N(C \mu, C V C^T)
 $$
-is a $q$-dimensional normal
+follows a $q$-dimensional Gaussian
 
 **Example.** We seek a 95% CI for $\beta_2 - \beta_1$. Let
 $C= \begin{pmatrix}
@@ -382,7 +382,7 @@ ggplot(diamonds2, aes(lcarat, lprice)) +
 
 ```{r}
 ggplot(diamonds2, aes(x=pred2, y=res2)) + 
-  geom_boxplot(mapping = aes(group = cut_width(pred2, 0.2))) +
+  geom_boxplot(mapping = aes(group = cut_interval(pred2, n=20))) +
   labs(x='Model prediction', y='Residuals')
 ```
 
@@ -404,26 +404,13 @@ ggplot(diamonds2, aes(x=res)) +
   labs(x='Residuals')
 ```
 
-### Histogram (base R)
 
-```{r}
-hist(scale(diamonds2$res), xlab='Residuals', prob=TRUE, main='')
-xseq= seq(-4,4,length=200)
-lines(xseq, dnorm(xseq))
-```
 ### qq-plot
 
 ```{r}
 ggplot(diamonds2) +
   geom_qq(aes(sample=scale(res))) +
   geom_abline(slope=1, intercept=0)
-```
-
-### qq-plot (base R)
-
-```{r}
-qqnorm(scale(diamonds2$res))
-abline(0,1)
 ```
 
 
@@ -455,8 +442,9 @@ Load the data, select and rename the needed variables, and remove Hawaii (outcom
 library(tidyverse)
 library(fivethirtyeight)
 source("../code/routines.R")
-hc= transmute(hate_crimes, state=state_abbrev, hatecrimes_fbi=avg_hatecrimes_per_100k_fbi, votes_trump=share_vote_trump, gini=gini_index, hs=share_pop_hs)
-hc= filter(hc, !is.na(hatecrimes_fbi)) #outcome must be non-missing
+hc= transmute(hate_crimes, state=state_abbrev, hatecrimes_fbi=avg_hatecrimes_per_100k_fbi, 
+              votes_trump=share_vote_trump, gini=gini_index, hs=share_pop_hs) |>
+  filter(!is.na(hatecrimes_fbi)) #outcome must be non-missing
 ```
 
 1. Fit a linear regression for `hatecrimes_fbi` vs. `votes_trump`, `gini`, `hs`. Report the point estimate, 95% intervals and P-values for the 3 covariates. Which of them are significantly associated to hate crimes?
