@@ -219,15 +219,16 @@
 <h2>Reproducing these lecture notes</h2>
 <p>Load the required R packages</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(corrplot)</span>
-<span id="cb1-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(coefplot)</span>
-<span id="cb1-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gapminder)</span>
-<span id="cb1-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggpubr)</span>
-<span id="cb1-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span>
-<span id="cb1-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(hexbin)</span>
-<span id="cb1-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(modelr)</span>
-<span id="cb1-8"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(multcomp)</span>
-<span id="cb1-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb1-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(corrplot)</span>
+<span id="cb1-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(coefplot)</span>
+<span id="cb1-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gapminder)</span>
+<span id="cb1-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggpubr)</span>
+<span id="cb1-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gtsummary)</span>
+<span id="cb1-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(hexbin)</span>
+<span id="cb1-8"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(modelr)</span>
+<span id="cb1-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(multcomp)</span>
+<span id="cb1-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We also load auxiliary routines stored at <code>routines.R</code> (directory <code>code</code>)</p>
 <div class="cell">
@@ -1523,9 +1524,8 @@ Levels: Fair Good Very Good Premium Ideal</code></pre>
 </section>
 <section class="slide level2">
 
-<p>More precisely, the model is</p>
-<p><span class="math display">\[
-\mbox{lprice}_i= \beta_0 + \beta_1 \mbox{carat}_i + \beta_2 \mbox{good}_i + \beta_3 \mbox{very good}_i + \beta_4 \mbox{premium}_i + \beta_5 \mbox{ideal}_i + \epsilon_i
+<p>More precisely, the model is <span class="math inline">\(\mbox{lprice}_i=\)</span> <span class="math display">\[
+\beta_0 + \beta_1 \mbox{carat}_i + \beta_2 \mbox{good}_i + \beta_3 \mbox{very good}_i + \beta_4 \mbox{premium}_i + \beta_5 \mbox{ideal}_i + \epsilon_i
 \]</span> When <code>cut</code> is fair and good we get (respectively)</p>
 <p><span class="math display">\[E(\mbox{lprice}_i \mid \mbox{fair}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox{lcarat}_i\]</span></p>
 <p><span class="math display">\[
@@ -1600,13 +1600,660 @@ E(\mbox{lprice}_i \mid \mbox{good}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox
 </div>
 </div>
 </section>
+<section id="gtsummary-1" class="slide level2">
+<h2>gtsummary</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="" aria-hidden="true" tabindex="-1"></a>exp2 <span class="ot">=</span> <span class="cf">function</span>(x, ...) {  <span class="co">#custom function to exponentiate coef and CIs</span></span>
+<span id="cb60-2"><a href="" aria-hidden="true" tabindex="-1"></a>      broom<span class="sc">::</span><span class="fu">tidy</span>(x, ...) <span class="sc">|&gt;</span></span>
+<span id="cb60-3"><a href="" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">estimate  =</span> <span class="dv">2</span><span class="sc">^</span>estimate, <span class="at">conf.low  =</span> <span class="dv">2</span><span class="sc">^</span>conf.low, <span class="at">conf.high =</span> <span class="dv">2</span><span class="sc">^</span>conf.high)</span>
+<span id="cb60-4"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb60-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb60-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">tbl_regression</span>(lmfit2, <span class="at">tidy_fun =</span> exp2) <span class="sc">|&gt;</span></span>
+<span id="cb60-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">modify_fmt_fun</span>(estimate  <span class="sc">~</span> <span class="cf">function</span>(x) <span class="fu">sprintf</span>(<span class="st">"%.2f"</span>, x), <span class="co">#format to 2 decimal places</span></span>
+<span id="cb60-8"><a href="" aria-hidden="true" tabindex="-1"></a>                 conf.low  <span class="sc">~</span> <span class="cf">function</span>(x) <span class="fu">sprintf</span>(<span class="st">"%.2f"</span>, x),</span>
+<span id="cb60-9"><a href="" aria-hidden="true" tabindex="-1"></a>                 conf.high <span class="sc">~</span> <span class="cf">function</span>(x) <span class="fu">sprintf</span>(<span class="st">"%.2f"</span>, x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="kbowajwtla" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#kbowajwtla table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#kbowajwtla thead, #kbowajwtla tbody, #kbowajwtla tfoot, #kbowajwtla tr, #kbowajwtla td, #kbowajwtla th {
+  border-style: none;
+}
+
+#kbowajwtla p {
+  margin: 0;
+  padding: 0;
+}
+
+#kbowajwtla .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#kbowajwtla .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#kbowajwtla .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#kbowajwtla .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#kbowajwtla .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#kbowajwtla .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#kbowajwtla .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#kbowajwtla .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#kbowajwtla .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#kbowajwtla .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#kbowajwtla .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#kbowajwtla .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#kbowajwtla .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#kbowajwtla .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#kbowajwtla .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kbowajwtla .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#kbowajwtla .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#kbowajwtla .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#kbowajwtla .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kbowajwtla .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#kbowajwtla .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kbowajwtla .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#kbowajwtla .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kbowajwtla .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kbowajwtla .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kbowajwtla .gt_left {
+  text-align: left;
+}
+
+#kbowajwtla .gt_center {
+  text-align: center;
+}
+
+#kbowajwtla .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#kbowajwtla .gt_font_normal {
+  font-weight: normal;
+}
+
+#kbowajwtla .gt_font_bold {
+  font-weight: bold;
+}
+
+#kbowajwtla .gt_font_italic {
+  font-style: italic;
+}
+
+#kbowajwtla .gt_super {
+  font-size: 65%;
+}
+
+#kbowajwtla .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#kbowajwtla .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#kbowajwtla .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#kbowajwtla .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#kbowajwtla .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#kbowajwtla .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#kbowajwtla .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#kbowajwtla .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#kbowajwtla div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="gt_col_headings header">
+<th id="label" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"><strong>Characteristic</strong></th>
+<th id="estimate" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>Beta</strong></th>
+<th id="conf.low" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>95% CI</strong></th>
+<th id="p.value" class="gt_col_heading gt_columns_bottom_border gt_center" data-quarto-table-cell-role="th" scope="col"><strong>p-value</strong></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">lcarat</td>
+<td class="gt_row gt_center" headers="estimate">3.69</td>
+<td class="gt_row gt_center" headers="conf.low">3.68, 3.70</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">cut</td>
+<td class="gt_row gt_center" headers="estimate"><br>
+</td>
+<td class="gt_row gt_center" headers="conf.low"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Fair</td>
+<td class="gt_row gt_center" headers="estimate">—</td>
+<td class="gt_row gt_center" headers="conf.low">—</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Good</td>
+<td class="gt_row gt_center" headers="estimate">1.08</td>
+<td class="gt_row gt_center" headers="conf.low">1.08, 1.09</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Very Good</td>
+<td class="gt_row gt_center" headers="estimate">1.12</td>
+<td class="gt_row gt_center" headers="conf.low">1.12, 1.13</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Premium</td>
+<td class="gt_row gt_center" headers="estimate">1.15</td>
+<td class="gt_row gt_center" headers="conf.low">1.14, 1.16</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;Ideal</td>
+<td class="gt_row gt_center" headers="estimate">1.17</td>
+<td class="gt_row gt_center" headers="conf.low">1.17, 1.18</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">color</td>
+<td class="gt_row gt_center" headers="estimate"><br>
+</td>
+<td class="gt_row gt_center" headers="conf.low"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;D</td>
+<td class="gt_row gt_center" headers="estimate">—</td>
+<td class="gt_row gt_center" headers="conf.low">—</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;E</td>
+<td class="gt_row gt_center" headers="estimate">0.95</td>
+<td class="gt_row gt_center" headers="conf.low">0.94, 0.95</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;F</td>
+<td class="gt_row gt_center" headers="estimate">0.91</td>
+<td class="gt_row gt_center" headers="conf.low">0.91, 0.91</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;G</td>
+<td class="gt_row gt_center" headers="estimate">0.85</td>
+<td class="gt_row gt_center" headers="conf.low">0.85, 0.86</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;H</td>
+<td class="gt_row gt_center" headers="estimate">0.78</td>
+<td class="gt_row gt_center" headers="conf.low">0.77, 0.78</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;I</td>
+<td class="gt_row gt_center" headers="estimate">0.69</td>
+<td class="gt_row gt_center" headers="conf.low">0.69, 0.69</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;J</td>
+<td class="gt_row gt_center" headers="estimate">0.60</td>
+<td class="gt_row gt_center" headers="conf.low">0.60, 0.60</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">clarity</td>
+<td class="gt_row gt_center" headers="estimate"><br>
+</td>
+<td class="gt_row gt_center" headers="conf.low"><br>
+</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;I1</td>
+<td class="gt_row gt_center" headers="estimate">—</td>
+<td class="gt_row gt_center" headers="conf.low">—</td>
+<td class="gt_row gt_center" headers="p.value"><br>
+</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;SI2</td>
+<td class="gt_row gt_center" headers="estimate">1.53</td>
+<td class="gt_row gt_center" headers="conf.low">1.52, 1.55</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;SI1</td>
+<td class="gt_row gt_center" headers="estimate">1.81</td>
+<td class="gt_row gt_center" headers="conf.low">1.79, 1.83</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;VS2</td>
+<td class="gt_row gt_center" headers="estimate">2.10</td>
+<td class="gt_row gt_center" headers="conf.low">2.08, 2.12</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;VS1</td>
+<td class="gt_row gt_center" headers="estimate">2.25</td>
+<td class="gt_row gt_center" headers="conf.low">2.23, 2.28</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;VVS2</td>
+<td class="gt_row gt_center" headers="estimate">2.58</td>
+<td class="gt_row gt_center" headers="conf.low">2.55, 2.61</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;VVS1</td>
+<td class="gt_row gt_center" headers="estimate">2.77</td>
+<td class="gt_row gt_center" headers="conf.low">2.74, 2.80</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="label">&nbsp;&nbsp;&nbsp;&nbsp;IF</td>
+<td class="gt_row gt_center" headers="estimate">3.05</td>
+<td class="gt_row gt_center" headers="conf.low">3.01, 3.08</td>
+<td class="gt_row gt_center" headers="p.value">&lt;0.001</td>
+</tr>
+</tbody><tfoot>
+<tr class="gt_sourcenotes odd">
+<td colspan="4" class="gt_sourcenote">Abbreviation: CI = Confidence Interval</td>
+</tr>
+</tfoot>
+
+</table>
+
+</div>
+</div>
+</div>
+</section>
 <section id="changing-the-reference-category" class="slide level2">
 <h2>Changing the reference category</h2>
 <p>Set J (worst color) as the reference category for <code>color</code></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="" aria-hidden="true" tabindex="-1"></a>diamonds2<span class="ot">=</span> <span class="fu">mutate</span>(diamonds2, <span class="at">color=</span><span class="fu">factor</span>(color, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">'J'</span>,<span class="st">'D'</span>,<span class="st">'E'</span>,<span class="st">'F'</span>,<span class="st">'G'</span>,<span class="st">'H'</span>,<span class="st">'I'</span>)))</span>
-<span id="cb60-2"><a href="" aria-hidden="true" tabindex="-1"></a>lmfit3<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity, <span class="at">data=</span>diamonds2)</span>
-<span id="cb60-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(lmfit3, <span class="at">transform=</span>power2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="" aria-hidden="true" tabindex="-1"></a>diamonds2<span class="ot">=</span> <span class="fu">mutate</span>(diamonds2, <span class="at">color=</span><span class="fu">factor</span>(color, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">'J'</span>,<span class="st">'D'</span>,<span class="st">'E'</span>,<span class="st">'F'</span>,<span class="st">'G'</span>,<span class="st">'H'</span>,<span class="st">'I'</span>)))</span>
+<span id="cb61-2"><a href="" aria-hidden="true" tabindex="-1"></a>lmfit3<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity, <span class="at">data=</span>diamonds2)</span>
+<span id="cb61-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(lmfit3, <span class="at">transform=</span>power2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 19 × 4
    Parameter    Estimate `Conf. Int.`       `P-value`
@@ -1642,8 +2289,8 @@ E(\mbox{lprice}_i \mid \mbox{good}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox
 <li><p>Unspecified predictors set to mean (continuous) or reference category (discrete)</p></li>
 </ul>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="" aria-hidden="true" tabindex="-1"></a>mygrid<span class="ot">=</span> <span class="fu">data_grid</span>(diamonds2, cut, color, clarity, <span class="at">.model=</span>lmfit2)</span>
-<span id="cb62-2"><a href="" aria-hidden="true" tabindex="-1"></a>mygrid</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="" aria-hidden="true" tabindex="-1"></a>mygrid<span class="ot">=</span> <span class="fu">data_grid</span>(diamonds2, cut, color, clarity, <span class="at">.model=</span>lmfit2)</span>
+<span id="cb63-2"><a href="" aria-hidden="true" tabindex="-1"></a>mygrid</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 280 × 4
    cut   color clarity lcarat
@@ -1665,8 +2312,8 @@ E(\mbox{lprice}_i \mid \mbox{good}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox
 <section class="slide level2">
 
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmpred2<span class="ot">=</span> <span class="fu">add_predictions</span>(mygrid, <span class="at">model=</span>lmfit2)</span>
-<span id="cb64-2"><a href="" aria-hidden="true" tabindex="-1"></a>lmpred2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmpred2<span class="ot">=</span> <span class="fu">add_predictions</span>(mygrid, <span class="at">model=</span>lmfit2)</span>
+<span id="cb65-2"><a href="" aria-hidden="true" tabindex="-1"></a>lmpred2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 280 × 5
    cut   color clarity lcarat  pred
@@ -1689,13 +2336,13 @@ E(\mbox{lprice}_i \mid \mbox{good}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox
 <section class="slide level2">
 
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lmpred2, <span class="fu">aes</span>(<span class="at">x=</span>clarity, <span class="at">y=</span>pred, <span class="at">color=</span>color)) <span class="sc">+</span></span>
-<span id="cb66-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb66-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> cut) <span class="sc">+</span></span>
-<span id="cb66-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">'log2 (price)'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lmpred2, <span class="fu">aes</span>(<span class="at">x=</span>clarity, <span class="at">y=</span>pred, <span class="at">color=</span>color)) <span class="sc">+</span></span>
+<span id="cb67-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb67-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> cut) <span class="sc">+</span></span>
+<span id="cb67-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">'log2 (price)'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-44-1.png" width="960" class="r-stretch"></section></section>
+<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-45-1.png" width="960" class="r-stretch"></section></section>
 <section>
 <section id="linear-contrasts" class="title-slide slide level1 center">
 <h1>Linear contrasts</h1>
@@ -1710,7 +2357,7 @@ E(\mbox{lprice}_i \mid \mbox{good}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox
 <li><p><span class="math inline">\(\beta_6 - \beta_5\)</span>: mean for “Ideal” - mean for “Premium”</p></li>
 </ul>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(lmfit2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(lmfit2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 19 × 4
    Parameter    Estimate `Conf. Int.`    `P-value`
@@ -1742,16 +2389,16 @@ E(\mbox{lprice}_i \mid \mbox{good}_i=1, \mbox{carat}_i)= \beta_0 + \beta_1 \mbox
 <p><strong>Goal.</strong> Test <span class="math inline">\(H_0: \beta_6 - \beta_5=0\)</span>. Get 95% confidence interval</p>
 <p>Linear contrasts done by <code>glht</code> (general linear hypotheses, R package <code>multcomp</code>)</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="" aria-hidden="true" tabindex="-1"></a>C<span class="ot">=</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow=</span><span class="dv">1</span>, <span class="at">ncol=</span><span class="fu">length</span>(<span class="fu">coef</span>(lmfit2)))</span>
-<span id="cb69-2"><a href="" aria-hidden="true" tabindex="-1"></a>C[<span class="dv">1</span>,<span class="dv">5</span>]<span class="ot">=</span> <span class="sc">-</span><span class="dv">1</span>; C[<span class="dv">1</span>,<span class="dv">6</span>]<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb69-3"><a href="" aria-hidden="true" tabindex="-1"></a>C[<span class="dv">1</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>] <span class="co">#show first 10 columns</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="" aria-hidden="true" tabindex="-1"></a>C<span class="ot">=</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow=</span><span class="dv">1</span>, <span class="at">ncol=</span><span class="fu">length</span>(<span class="fu">coef</span>(lmfit2)))</span>
+<span id="cb70-2"><a href="" aria-hidden="true" tabindex="-1"></a>C[<span class="dv">1</span>,<span class="dv">5</span>]<span class="ot">=</span> <span class="sc">-</span><span class="dv">1</span>; C[<span class="dv">1</span>,<span class="dv">6</span>]<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb70-3"><a href="" aria-hidden="true" tabindex="-1"></a>C[<span class="dv">1</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>] <span class="co">#show first 10 columns</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> [1]  0  0  0  0 -1  1  0  0  0  0</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="" aria-hidden="true" tabindex="-1"></a>PvsI<span class="ot">=</span> <span class="fu">glht</span>(lmfit2, C)</span>
-<span id="cb71-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(PvsI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="" aria-hidden="true" tabindex="-1"></a>PvsI<span class="ot">=</span> <span class="fu">glht</span>(lmfit2, C)</span>
+<span id="cb72-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(PvsI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Simultaneous Tests for General Linear Hypotheses
@@ -1765,7 +2412,7 @@ Linear Hypotheses:
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 (Adjusted p values reported -- single-step method)</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(PvsI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">confint</span>(PvsI)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
      Simultaneous Confidence Intervals
@@ -1786,9 +2433,9 @@ Linear Hypotheses:
 <h2>Doing it on our own</h2>
 <p>Recall that <span class="math inline">\(\hat{\beta} \sim N(\beta, V)\)</span>, where <span class="math inline">\(V= \sigma^2 (X^T X)^{-1}\)</span></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="" aria-hidden="true" tabindex="-1"></a>bhat<span class="ot">=</span> <span class="fu">matrix</span>(<span class="fu">coef</span>(lmfit2), <span class="at">ncol=</span><span class="dv">1</span>)</span>
-<span id="cb75-2"><a href="" aria-hidden="true" tabindex="-1"></a>V<span class="ot">=</span> <span class="fu">vcov</span>(lmfit2)</span>
-<span id="cb75-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">sqrt</span>(<span class="fu">diag</span>(V)), <span class="dv">5</span>) <span class="co">#SE's for beta's (compare to summary(lmfit2))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="" aria-hidden="true" tabindex="-1"></a>bhat<span class="ot">=</span> <span class="fu">matrix</span>(<span class="fu">coef</span>(lmfit2), <span class="at">ncol=</span><span class="dv">1</span>)</span>
+<span id="cb76-2"><a href="" aria-hidden="true" tabindex="-1"></a>V<span class="ot">=</span> <span class="fu">vcov</span>(lmfit2)</span>
+<span id="cb76-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">sqrt</span>(<span class="fu">diag</span>(V)), <span class="dv">5</span>) <span class="co">#SE's for beta's (compare to summary(lmfit2))</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> (Intercept)       lcarat      cutGood cutVery Good   cutPremium     cutIdeal 
      0.00831      0.00113      0.00561      0.00522      0.00516      0.00512 
@@ -1802,15 +2449,15 @@ Linear Hypotheses:
 </div>
 <p>Recall that <span class="math inline">\(C \hat{\beta} \sim N(C \beta, C V C^T)\)</span>. For us <span class="math inline">\(C \hat{\beta}= \hat{\beta}_6 - \hat{\beta}_5\)</span>, <span class="math inline">\(C\beta =\beta_6 - \beta_5\)</span>.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="" aria-hidden="true" tabindex="-1"></a>dhat<span class="ot">=</span> C <span class="sc">%*%</span> bhat</span>
-<span id="cb77-2"><a href="" aria-hidden="true" tabindex="-1"></a>se<span class="ot">=</span> <span class="fu">sqrt</span>(C <span class="sc">%*%</span> V <span class="sc">%*%</span> <span class="fu">t</span>(C))</span>
-<span id="cb77-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(se, <span class="dv">5</span>) <span class="co">#matches previous slide</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="" aria-hidden="true" tabindex="-1"></a>dhat<span class="ot">=</span> C <span class="sc">%*%</span> bhat</span>
+<span id="cb78-2"><a href="" aria-hidden="true" tabindex="-1"></a>se<span class="ot">=</span> <span class="fu">sqrt</span>(C <span class="sc">%*%</span> V <span class="sc">%*%</span> <span class="fu">t</span>(C))</span>
+<span id="cb78-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(se, <span class="dv">5</span>) <span class="co">#matches previous slide</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        [,1]
 [1,] 0.00215</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="" aria-hidden="true" tabindex="-1"></a>dhat.ci<span class="ot">=</span> <span class="fu">c</span>(<span class="at">estimate=</span>dhat, <span class="at">ci.low=</span> dhat <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">ci.up=</span> dhat <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se)</span>
-<span id="cb79-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(dhat.ci, <span class="dv">5</span>) <span class="co">#matches previous slide</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="" aria-hidden="true" tabindex="-1"></a>dhat.ci<span class="ot">=</span> <span class="fu">c</span>(<span class="at">estimate=</span>dhat, <span class="at">ci.low=</span> dhat <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">ci.up=</span> dhat <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se)</span>
+<span id="cb80-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(dhat.ci, <span class="dv">5</span>) <span class="co">#matches previous slide</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>estimate   ci.low    ci.up 
  0.03156  0.02734  0.03577 </code></pre>
@@ -1829,19 +2476,19 @@ Linear Hypotheses:
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diamonds2, <span class="fu">aes</span>(lcarat, lprice, <span class="at">color=</span>cut)) <span class="sc">+</span></span>
-<span id="cb81-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb81-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span><span class="st">'lm'</span>, <span class="at">se=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diamonds2, <span class="fu">aes</span>(lcarat, lprice, <span class="at">color=</span>cut)) <span class="sc">+</span></span>
+<span id="cb82-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb82-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method=</span><span class="st">'lm'</span>, <span class="at">se=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 
 </div>
-<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-50-1.png" width="960" class="r-stretch"></section>
+<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-51-1.png" width="960" class="r-stretch"></section>
 <section class="slide level2">
 
 <p>Let’s fit a model with interactions. All coefficients are statistically significant</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmfit3<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> lcarat<span class="sc">:</span>cut, <span class="at">data=</span>diamonds2)</span>
-<span id="cb82-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(lmfit3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmfit3<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> lcarat<span class="sc">:</span>cut, <span class="at">data=</span>diamonds2)</span>
+<span id="cb83-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(lmfit3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 4
    Parameter           Estimate `Conf. Int.`   `P-value`
@@ -1885,8 +2532,8 @@ Linear Hypotheses:
 <li><p>Compare with likelihood-ratio test (=ANOVA for linear models)</p></li>
 </ol>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmfit4<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut, <span class="at">data=</span>diamonds2)</span>
-<span id="cb84-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(lmfit4, lmfit3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmfit4<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut, <span class="at">data=</span>diamonds2)</span>
+<span id="cb85-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(lmfit4, lmfit3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Analysis of Variance Table
 
@@ -1904,34 +2551,34 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <h2>The full exercise</h2>
 <p>Consider all possible interactions. All P-values are highly statistically significant</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmfull<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>cut <span class="sc">+</span> lcarat<span class="sc">:</span>color <span class="sc">+</span> lcarat<span class="sc">:</span>clarity, <span class="at">data=</span>diamonds2)</span>
-<span id="cb86-2"><a href="" aria-hidden="true" tabindex="-1"></a>lmdrop1<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>color <span class="sc">+</span> lcarat<span class="sc">:</span>clarity, <span class="at">data=</span>diamonds2)</span>
-<span id="cb86-3"><a href="" aria-hidden="true" tabindex="-1"></a>pvalue1<span class="ot">=</span> <span class="fu">anova</span>(lmdrop1, lmfull)[[<span class="st">'Pr(&gt;F)'</span>]][<span class="dv">2</span>]</span>
-<span id="cb86-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb86-5"><a href="" aria-hidden="true" tabindex="-1"></a>lmdrop2<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>cut <span class="sc">+</span> lcarat<span class="sc">:</span>clarity, <span class="at">data=</span>diamonds2)</span>
-<span id="cb86-6"><a href="" aria-hidden="true" tabindex="-1"></a>pvalue2<span class="ot">=</span> <span class="fu">anova</span>(lmdrop2, lmfull)[[<span class="st">'Pr(&gt;F)'</span>]][<span class="dv">2</span>]</span>
-<span id="cb86-7"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb86-8"><a href="" aria-hidden="true" tabindex="-1"></a>lmdrop3<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>cut <span class="sc">+</span> lcarat<span class="sc">:</span>color, <span class="at">data=</span>diamonds2)</span>
-<span id="cb86-9"><a href="" aria-hidden="true" tabindex="-1"></a>pvalue3<span class="ot">=</span> <span class="fu">anova</span>(lmdrop3, lmfull)[[<span class="st">'Pr(&gt;F)'</span>]][<span class="dv">2</span>]</span>
-<span id="cb86-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(pvalue1, pvalue2, pvalue3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb87"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb87-1"><a href="" aria-hidden="true" tabindex="-1"></a>lmfull<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>cut <span class="sc">+</span> lcarat<span class="sc">:</span>color <span class="sc">+</span> lcarat<span class="sc">:</span>clarity, <span class="at">data=</span>diamonds2)</span>
+<span id="cb87-2"><a href="" aria-hidden="true" tabindex="-1"></a>lmdrop1<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>color <span class="sc">+</span> lcarat<span class="sc">:</span>clarity, <span class="at">data=</span>diamonds2)</span>
+<span id="cb87-3"><a href="" aria-hidden="true" tabindex="-1"></a>pvalue1<span class="ot">=</span> <span class="fu">anova</span>(lmdrop1, lmfull)[[<span class="st">'Pr(&gt;F)'</span>]][<span class="dv">2</span>]</span>
+<span id="cb87-4"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb87-5"><a href="" aria-hidden="true" tabindex="-1"></a>lmdrop2<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>cut <span class="sc">+</span> lcarat<span class="sc">:</span>clarity, <span class="at">data=</span>diamonds2)</span>
+<span id="cb87-6"><a href="" aria-hidden="true" tabindex="-1"></a>pvalue2<span class="ot">=</span> <span class="fu">anova</span>(lmdrop2, lmfull)[[<span class="st">'Pr(&gt;F)'</span>]][<span class="dv">2</span>]</span>
+<span id="cb87-7"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb87-8"><a href="" aria-hidden="true" tabindex="-1"></a>lmdrop3<span class="ot">=</span> <span class="fu">lm</span>(lprice <span class="sc">~</span> lcarat <span class="sc">+</span> cut <span class="sc">+</span> color <span class="sc">+</span> clarity <span class="sc">+</span> lcarat<span class="sc">:</span>cut <span class="sc">+</span> lcarat<span class="sc">:</span>color, <span class="at">data=</span>diamonds2)</span>
+<span id="cb87-9"><a href="" aria-hidden="true" tabindex="-1"></a>pvalue3<span class="ot">=</span> <span class="fu">anova</span>(lmdrop3, lmfull)[[<span class="st">'Pr(&gt;F)'</span>]][<span class="dv">2</span>]</span>
+<span id="cb87-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">c</span>(pvalue1, pvalue2, pvalue3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 5.092037e-272  9.480426e-27 1.017366e-132</code></pre>
 </div>
 </div>
 <p>However, predictions are nearly identical</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lmfit2)<span class="sc">$</span>r.squared <span class="co">#additive model</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lmfit2)<span class="sc">$</span>r.squared <span class="co">#additive model</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.9826161</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lmfull)<span class="sc">$</span>r.squared <span class="co">#additive + all pairwise interactions</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb91"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb91-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lmfull)<span class="sc">$</span>r.squared <span class="co">#additive + all pairwise interactions</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.9832858</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="" aria-hidden="true" tabindex="-1"></a>diamonds2<span class="sc">$</span>predfull<span class="ot">=</span> <span class="fu">predict</span>(lmfull)</span>
-<span id="cb92-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(diamonds2<span class="sc">$</span>pred2, diamonds2<span class="sc">$</span>predfull)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb93"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb93-1"><a href="" aria-hidden="true" tabindex="-1"></a>diamonds2<span class="sc">$</span>predfull<span class="ot">=</span> <span class="fu">predict</span>(lmfull)</span>
+<span id="cb93-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(diamonds2<span class="sc">$</span>pred2, diamonds2<span class="sc">$</span>predfull)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.9996594</code></pre>
 </div>
@@ -2116,23 +2763,23 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 
 <p><code>multiplot</code> visually compares coefficients across models. Interactions lcarat:cut are smaller under the full model</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(lmfull, lmfit3, <span class="at">intercept=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">multiplot</span>(lmfull, lmfit3, <span class="at">intercept=</span><span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-58-1.png" width="960" class="r-stretch"></section>
+<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-59-1.png" width="960" class="r-stretch"></section>
 <section id="specifying-interactions-in-r" class="slide level2">
 <h2>Specifying interactions in R</h2>
 <p>We simulate some data for illustration</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb95"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb95-1"><a href="" aria-hidden="true" tabindex="-1"></a>x1<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>); x2<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>); x3<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
-<span id="cb95-2"><a href="" aria-hidden="true" tabindex="-1"></a>y<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, x1 <span class="sc">+</span> x2<span class="sc">/</span><span class="dv">2</span>, <span class="at">sd=</span><span class="dv">1</span>)  <span class="co">#y = x1 + x2/2 + e, e ~ N(0,1)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="" aria-hidden="true" tabindex="-1"></a>x1<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>); x2<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>); x3<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>)</span>
+<span id="cb96-2"><a href="" aria-hidden="true" tabindex="-1"></a>y<span class="ot">=</span> <span class="fu">rnorm</span>(<span class="dv">100</span>, x1 <span class="sc">+</span> x2<span class="sc">/</span><span class="dv">2</span>, <span class="at">sd=</span><span class="dv">1</span>)  <span class="co">#y = x1 + x2/2 + e, e ~ N(0,1)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Three ways to specify the same regression equation</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="" aria-hidden="true" tabindex="-1"></a>fit1<span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3 <span class="sc">+</span> x1<span class="sc">:</span>x2 <span class="sc">+</span> x1<span class="sc">:</span>x3 <span class="sc">+</span> x2<span class="sc">:</span>x3)</span>
-<span id="cb96-2"><a href="" aria-hidden="true" tabindex="-1"></a>fit2<span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> x1<span class="sc">*</span>x2 <span class="sc">+</span> x1<span class="sc">*</span>x3 <span class="sc">+</span> x2<span class="sc">*</span>x3) <span class="co">#with * you can drop the additive terms</span></span>
-<span id="cb96-3"><a href="" aria-hidden="true" tabindex="-1"></a>fit3<span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> (x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3)<span class="sc">^</span><span class="dv">2</span>) <span class="co">#^2 adds main effects + interactions in one go</span></span>
-<span id="cb96-4"><a href="" aria-hidden="true" tabindex="-1"></a>fit3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb97"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb97-1"><a href="" aria-hidden="true" tabindex="-1"></a>fit1<span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3 <span class="sc">+</span> x1<span class="sc">:</span>x2 <span class="sc">+</span> x1<span class="sc">:</span>x3 <span class="sc">+</span> x2<span class="sc">:</span>x3)</span>
+<span id="cb97-2"><a href="" aria-hidden="true" tabindex="-1"></a>fit2<span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> x1<span class="sc">*</span>x2 <span class="sc">+</span> x1<span class="sc">*</span>x3 <span class="sc">+</span> x2<span class="sc">*</span>x3) <span class="co">#with * you can drop the additive terms</span></span>
+<span id="cb97-3"><a href="" aria-hidden="true" tabindex="-1"></a>fit3<span class="ot">=</span> <span class="fu">lm</span>(y <span class="sc">~</span> (x1 <span class="sc">+</span> x2 <span class="sc">+</span> x3)<span class="sc">^</span><span class="dv">2</span>) <span class="co">#^2 adds main effects + interactions in one go</span></span>
+<span id="cb97-4"><a href="" aria-hidden="true" tabindex="-1"></a>fit3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -2140,9 +2787,9 @@ lm(formula = y ~ (x1 + x2 + x3)^2)
 
 Coefficients:
 (Intercept)           x1           x2           x3        x1:x2        x1:x3  
-   -0.02079      0.90359      0.48859     -0.10508      0.11278      0.10701  
+   -0.11727      0.95891      0.41530     -0.02917     -0.10103     -0.11061  
       x2:x3  
-   -0.04477  </code></pre>
+   -0.03486  </code></pre>
 </div>
 </div>
 </section></section>
@@ -2156,8 +2803,8 @@ Coefficients:
 <p>A particular type of interaction is when data are nested within units (e.g.&nbsp;countries), and we wanna fit a model for each unit</p>
 <p><strong>Example</strong> gapminder data (country life expectancy over time)</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gapminder)</span>
-<span id="cb98-2"><a href="" aria-hidden="true" tabindex="-1"></a>gapminder</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb99"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb99-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gapminder)</span>
+<span id="cb99-2"><a href="" aria-hidden="true" tabindex="-1"></a>gapminder</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1,704 × 6
    country     continent  year lifeExp      pop gdpPercap
@@ -2179,11 +2826,11 @@ Coefficients:
 <section class="slide level2">
 
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gapminder, <span class="fu">aes</span>(year, lifeExp, <span class="at">group =</span> country)) <span class="sc">+</span></span>
-<span id="cb100-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span> continent)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gapminder, <span class="fu">aes</span>(year, lifeExp, <span class="at">group =</span> country)) <span class="sc">+</span></span>
+<span id="cb101-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span> continent)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-62-1.png" width="960" class="r-stretch"></section>
+<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-63-1.png" width="960" class="r-stretch"></section>
 <section class="slide level2">
 
 <p>Two ways to fit a model separately for each country:</p>
@@ -2194,8 +2841,8 @@ Coefficients:
 <p>Note: better alternatives to fit nested models (random effects/hierarchical models)</p>
 <p>First, group by country and <code>nest</code> dataset: each row is a country, and column <code>$data</code> is a list of tibbles</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb101"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb101-1"><a href="" aria-hidden="true" tabindex="-1"></a>gm_country<span class="ot">=</span> <span class="fu">group_by</span>(gapminder, country, continent) <span class="sc">|&gt;</span> <span class="fu">nest</span>() </span>
-<span id="cb101-2"><a href="" aria-hidden="true" tabindex="-1"></a>gm_country</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="" aria-hidden="true" tabindex="-1"></a>gm_country<span class="ot">=</span> <span class="fu">group_by</span>(gapminder, country, continent) <span class="sc">|&gt;</span> <span class="fu">nest</span>() </span>
+<span id="cb102-2"><a href="" aria-hidden="true" tabindex="-1"></a>gm_country</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 142 × 3
 # Groups:   country, continent [142]
@@ -2219,19 +2866,19 @@ Coefficients:
 
 <p>Second, define a function to be applied to each dataset</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb103"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb103-1"><a href="" aria-hidden="true" tabindex="-1"></a>fitmodel<span class="ot">=</span> <span class="cf">function</span>(df) {</span>
-<span id="cb103-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">#Return OLS and R2 for lifeExp ~ year</span></span>
-<span id="cb103-3"><a href="" aria-hidden="true" tabindex="-1"></a>  fit<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> year, <span class="at">data=</span>df)</span>
-<span id="cb103-4"><a href="" aria-hidden="true" tabindex="-1"></a>  ans<span class="ot">=</span> <span class="fu">c</span>(<span class="fu">coef</span>(fit), <span class="fu">summary</span>(fit)<span class="sc">$</span>r.squared)</span>
-<span id="cb103-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(ans)<span class="ot">=</span> <span class="fu">c</span>(<span class="st">'b0'</span>,<span class="st">'b1'</span>,<span class="st">'R2'</span>)</span>
-<span id="cb103-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(ans)</span>
-<span id="cb103-7"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="" aria-hidden="true" tabindex="-1"></a>fitmodel<span class="ot">=</span> <span class="cf">function</span>(df) {</span>
+<span id="cb104-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">#Return OLS and R2 for lifeExp ~ year</span></span>
+<span id="cb104-3"><a href="" aria-hidden="true" tabindex="-1"></a>  fit<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> year, <span class="at">data=</span>df)</span>
+<span id="cb104-4"><a href="" aria-hidden="true" tabindex="-1"></a>  ans<span class="ot">=</span> <span class="fu">c</span>(<span class="fu">coef</span>(fit), <span class="fu">summary</span>(fit)<span class="sc">$</span>r.squared)</span>
+<span id="cb104-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(ans)<span class="ot">=</span> <span class="fu">c</span>(<span class="st">'b0'</span>,<span class="st">'b1'</span>,<span class="st">'R2'</span>)</span>
+<span id="cb104-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(ans)</span>
+<span id="cb104-7"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Finally, use <code>map_df</code> to apply <code>fitmodel</code> to each entry of the list <code>gm_country$data</code></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gm <span class="ot">=</span> <span class="fu">map_df</span>(gm_country<span class="sc">$</span>data, fitmodel)</span>
-<span id="cb104-2"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gm <span class="ot">=</span> <span class="fu">cbind</span>(gm_country, coef_gm)</span>
-<span id="cb104-3"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gm</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb105"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb105-1"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gm <span class="ot">=</span> <span class="fu">map_df</span>(gm_country<span class="sc">$</span>data, fitmodel)</span>
+<span id="cb105-2"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gm <span class="ot">=</span> <span class="fu">cbind</span>(gm_country, coef_gm)</span>
+<span id="cb105-3"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gm</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 142 × 6
 # Groups:   country, continent [142]
@@ -2259,11 +2906,11 @@ Coefficients:
 <div class="tab-content">
 <div id="tabset-7-1">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(coef_gm, <span class="fu">aes</span>(<span class="at">x=</span>R2)) <span class="sc">+</span> <span class="fu">geom_histogram</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(coef_gm, <span class="fu">aes</span>(<span class="at">x=</span>R2)) <span class="sc">+</span> <span class="fu">geom_histogram</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-66-1.png" width="960"></p>
+<p><img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-67-1.png" width="960"></p>
 </figure>
 </div>
 </div>
@@ -2271,8 +2918,8 @@ Coefficients:
 </div>
 <div id="tabset-7-2">
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb107"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb107-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">#dplyr:filter and dplyr::select ensures using functions (filter,select) from package dplyr</span></span>
-<span id="cb107-2"><a href="" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">filter</span>(coef_gm, R2 <span class="sc">&lt;</span> <span class="fl">0.5</span>) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">select</span>(country, continent, R2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co">#dplyr:filter and dplyr::select ensures using functions (filter,select) from package dplyr</span></span>
+<span id="cb108-2"><a href="" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">filter</span>(coef_gm, R2 <span class="sc">&lt;</span> <span class="fl">0.5</span>) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">select</span>(country, continent, R2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 13 × 3
 # Groups:   country, continent [13]
@@ -2302,10 +2949,10 @@ Coefficients:
 
 <p>Unnest the dataset and add predictions</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb109"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb109-1"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gmu<span class="ot">=</span> <span class="fu">unnest</span>(coef_gm, <span class="at">cols=</span><span class="fu">names</span>(coef_gm)) <span class="sc">|&gt;</span>  <span class="co">#unnest &amp; keep all columns</span></span>
-<span id="cb109-2"><a href="" aria-hidden="true" tabindex="-1"></a>          <span class="fu">transform</span>(<span class="at">pred=</span> b0 <span class="sc">+</span> b1<span class="sc">*</span>year) <span class="sc">|&gt;</span>         <span class="co">#add predictions</span></span>
-<span id="cb109-3"><a href="" aria-hidden="true" tabindex="-1"></a>          <span class="fu">transform</span>(<span class="at">R2=</span><span class="fu">round</span>(R2,<span class="dv">3</span>), <span class="at">lifeExp=</span><span class="fu">round</span>(lifeExp,<span class="dv">1</span>), <span class="at">pred=</span><span class="fu">round</span>(pred,<span class="dv">1</span>)) <span class="co">#round</span></span>
-<span id="cb109-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(coef_gmu, country, year, lifeExp, gdpPercap, R2, pred)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb110"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="" aria-hidden="true" tabindex="-1"></a>coef_gmu<span class="ot">=</span> <span class="fu">unnest</span>(coef_gm, <span class="at">cols=</span><span class="fu">names</span>(coef_gm)) <span class="sc">|&gt;</span>  <span class="co">#unnest &amp; keep all columns</span></span>
+<span id="cb110-2"><a href="" aria-hidden="true" tabindex="-1"></a>          <span class="fu">transform</span>(<span class="at">pred=</span> b0 <span class="sc">+</span> b1<span class="sc">*</span>year) <span class="sc">|&gt;</span>         <span class="co">#add predictions</span></span>
+<span id="cb110-3"><a href="" aria-hidden="true" tabindex="-1"></a>          <span class="fu">transform</span>(<span class="at">R2=</span><span class="fu">round</span>(R2,<span class="dv">3</span>), <span class="at">lifeExp=</span><span class="fu">round</span>(lifeExp,<span class="dv">1</span>), <span class="at">pred=</span><span class="fu">round</span>(pred,<span class="dv">1</span>)) <span class="co">#round</span></span>
+<span id="cb110-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(coef_gmu, country, year, lifeExp, gdpPercap, R2, pred)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                      country year lifeExp   gdpPercap    R2 pred
 1                 Afghanistan 1952    28.8    779.4453 0.948 29.9
@@ -4018,14 +4665,14 @@ Coefficients:
 <section class="slide level2">
 
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb111"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href="" aria-hidden="true" tabindex="-1"></a>poorfit<span class="ot">=</span> <span class="fu">filter</span>(coef_gmu, R2 <span class="sc">&lt;</span> <span class="fl">0.25</span>) <span class="co">#countries with low R2</span></span>
-<span id="cb111-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(poorfit) <span class="sc">+</span></span>
-<span id="cb111-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(year, lifeExp)) <span class="sc">+</span></span>
-<span id="cb111-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(year, pred), <span class="at">col=</span><span class="st">'red'</span>) <span class="sc">+</span></span>
-<span id="cb111-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> country)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="" aria-hidden="true" tabindex="-1"></a>poorfit<span class="ot">=</span> <span class="fu">filter</span>(coef_gmu, R2 <span class="sc">&lt;</span> <span class="fl">0.25</span>) <span class="co">#countries with low R2</span></span>
+<span id="cb112-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(poorfit) <span class="sc">+</span></span>
+<span id="cb112-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(year, lifeExp)) <span class="sc">+</span></span>
+<span id="cb112-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(year, pred), <span class="at">col=</span><span class="st">'red'</span>) <span class="sc">+</span></span>
+<span id="cb112-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> country)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 </div>
-<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-69-1.png" width="960" class="r-stretch"><p>Can you explain any of these patterns?</p>
+<img data-src="05_basicmodels_files/figure-revealjs/unnamed-chunk-70-1.png" width="960" class="r-stretch"><p>Can you explain any of these patterns?</p>
 </section></section>
 <section>
 <section id="summary-of-useful-functions" class="title-slide slide level1 center">
@@ -4037,8 +4684,9 @@ Coefficients:
 <ul>
 <li><p>Fitting the model: <code>lm</code>, <code>predict</code>, <code>residuals</code></p></li>
 <li><p>Extract inference from fitted model: <code>summary</code>, <code>confint</code></p></li>
-<li><p>Plot coefficients: <code>coefplot</code>, <code>multiplot</code></p></li>
-<li><p>Plot predictions: <code>data_grid</code>, <code>add_predictions</code></p></li>
+<li><p>Table with regression output: <code>coefSummary</code> (at <code>routines.R</code>), <code>tbl_summary</code> (package <code>gtsummary</code>)</p></li>
+<li><p>Plot coefficients: <code>coefplot</code>, <code>multiplot</code> (package <code>coefplot</code>)</p></li>
+<li><p>Plot predictions: <code>data_grid</code>, <code>add_predictions</code> (package <code>modelr</code>)</p></li>
 <li><p>Diagnostics: <code>geom_smooth</code>, <code>geom_boxplot</code>, <code>geom_qq</code></p></li>
 </ul>
 </section></section>
@@ -4047,15 +4695,15 @@ Coefficients:
 <h1>Exercise</h1>
 <p>Select 3 countries, create factor <code>country</code> with 3 levels. Create <code>years_since_1952</code></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb112-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gapminder)</span>
-<span id="cb112-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"../code/routines.R"</span>)</span>
-<span id="cb112-4"><a href="" aria-hidden="true" tabindex="-1"></a>gm3<span class="ot">=</span> gapminder <span class="sc">|&gt;</span> </span>
-<span id="cb112-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'France'</span>,<span class="st">'Italy'</span>,<span class="st">'Spain'</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb112-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transform</span>(<span class="at">country=</span> <span class="fu">factor</span>(country), <span class="at">years_since_1952=</span> year <span class="sc">-</span> <span class="dv">1952</span>)</span>
-<span id="cb112-7"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb112-8"><a href="" aria-hidden="true" tabindex="-1"></a>fit1<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country, <span class="at">data=</span>gm3)</span>
-<span id="cb112-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(fit1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb113"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb113-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gapminder)</span>
+<span id="cb113-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"../code/routines.R"</span>)</span>
+<span id="cb113-4"><a href="" aria-hidden="true" tabindex="-1"></a>gm3<span class="ot">=</span> gapminder <span class="sc">|&gt;</span> </span>
+<span id="cb113-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(country <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">'France'</span>,<span class="st">'Italy'</span>,<span class="st">'Spain'</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb113-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transform</span>(<span class="at">country=</span> <span class="fu">factor</span>(country), <span class="at">years_since_1952=</span> year <span class="sc">-</span> <span class="dv">1952</span>)</span>
+<span id="cb113-7"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb113-8"><a href="" aria-hidden="true" tabindex="-1"></a>fit1<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country, <span class="at">data=</span>gm3)</span>
+<span id="cb113-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(fit1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 4
   Parameter        Estimate `Conf. Int.`    `P-value`
@@ -4076,11 +4724,11 @@ Coefficients:
 
 <p><code>country</code> has 3 levels. <code>contrasts</code> shows how they’re coded</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(gm3<span class="sc">$</span>country)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb115"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(gm3<span class="sc">$</span>country)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "France" "Italy"  "Spain" </code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb116"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb116-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(gm3<span class="sc">$</span>country)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(gm3<span class="sc">$</span>country)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       Italy Spain
 France     0     0
@@ -4115,7 +4763,7 @@ x_{i3}= \begin{cases} 1 \mbox{, if country}_i=\mbox{Italy} \\ -1 \mbox{, if coun
 
 <p>sum-to-zero coding can be done with <code>contrasts</code> and <code>contr.sum</code></p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb118"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb118-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">contr.sum</span>(<span class="fu">levels</span>(gm3<span class="sc">$</span>country)) <span class="co">#check what the sum-to-zero codes look like</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb119"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">contr.sum</span>(<span class="fu">levels</span>(gm3<span class="sc">$</span>country)) <span class="co">#check what the sum-to-zero codes look like</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       [,1] [,2]
 France    1    0
@@ -4124,15 +4772,15 @@ Spain    -1   -1</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb120"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb120-1"><a href="" aria-hidden="true" tabindex="-1"></a>gm3<span class="sc">$</span>country0<span class="ot">=</span> gm3<span class="sc">$</span>country <span class="co">#create new variable</span></span>
-<span id="cb120-2"><a href="" aria-hidden="true" tabindex="-1"></a>c0<span class="ot">=</span> <span class="fu">contr.sum</span>(<span class="fu">levels</span>(gm3<span class="sc">$</span>country0)) <span class="co">#tell contr.sum the factor levels</span></span>
-<span id="cb120-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(c0)<span class="ot">=</span> <span class="fu">c</span>(<span class="st">'France'</span>,<span class="st">'Italy'</span>)   <span class="co">#set column names to facilitate interpreting coef.</span></span>
-<span id="cb120-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(gm3<span class="sc">$</span>country0) <span class="ot">=</span> c0</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="" aria-hidden="true" tabindex="-1"></a>gm3<span class="sc">$</span>country0<span class="ot">=</span> gm3<span class="sc">$</span>country <span class="co">#create new variable</span></span>
+<span id="cb121-2"><a href="" aria-hidden="true" tabindex="-1"></a>c0<span class="ot">=</span> <span class="fu">contr.sum</span>(<span class="fu">levels</span>(gm3<span class="sc">$</span>country0)) <span class="co">#tell contr.sum the factor levels</span></span>
+<span id="cb121-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(c0)<span class="ot">=</span> <span class="fu">c</span>(<span class="st">'France'</span>,<span class="st">'Italy'</span>)   <span class="co">#set column names to facilitate interpreting coef.</span></span>
+<span id="cb121-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">contrasts</span>(gm3<span class="sc">$</span>country0) <span class="ot">=</span> c0</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s fit the model with the new coding</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="" aria-hidden="true" tabindex="-1"></a>fit2<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country0, <span class="at">data=</span>gm3)</span>
-<span id="cb121-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(fit2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb122"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb122-1"><a href="" aria-hidden="true" tabindex="-1"></a>fit2<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country0, <span class="at">data=</span>gm3)</span>
+<span id="cb122-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">coefSummary</span>(fit2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 4 × 4
   Parameter        Estimate `Conf. Int.`    `P-value`
@@ -4173,8 +4821,8 @@ x_{i3}= \begin{cases} 1 \mbox{, if country}_i=\mbox{Italy} \\ -1 \mbox{, if coun
 <h2>Exercise</h2>
 <p>Fit a model with interactions with the 0/1 coding and with the sum-to-zero coding. Interpret the estimated parameter values from each model</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="" aria-hidden="true" tabindex="-1"></a>fit3<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country <span class="sc">+</span> years_since_1952<span class="sc">:</span>country, <span class="at">data=</span>gm3)</span>
-<span id="cb123-2"><a href="" aria-hidden="true" tabindex="-1"></a>fit4<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country0 <span class="sc">+</span> years_since_1952<span class="sc">:</span>country0, <span class="at">data=</span>gm3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="" aria-hidden="true" tabindex="-1"></a>fit3<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country <span class="sc">+</span> years_since_1952<span class="sc">:</span>country, <span class="at">data=</span>gm3)</span>
+<span id="cb124-2"><a href="" aria-hidden="true" tabindex="-1"></a>fit4<span class="ot">=</span> <span class="fu">lm</span>(lifeExp <span class="sc">~</span> years_since_1952 <span class="sc">+</span> country0 <span class="sc">+</span> years_since_1952<span class="sc">:</span>country0, <span class="at">data=</span>gm3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 </section></section>

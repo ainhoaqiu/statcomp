@@ -26,6 +26,7 @@ bibliography: references.bib
 Load the required R packages
 
 ```{r, warning=FALSE}
+library(broom)
 library(corrplot)
 library(coefplot)
 library(gapminder)
@@ -521,10 +522,9 @@ For `cut`, "Fair" is the reference category.
 
 ---
 
-More precisely, the model is
-
+More precisely, the model is $\mbox{lprice}_i=$
 $$
-\mbox{lprice}_i= \beta_0 + \beta_1 \mbox{carat}_i + \beta_2 \mbox{good}_i + \beta_3 \mbox{very good}_i + \beta_4 \mbox{premium}_i + \beta_5 \mbox{ideal}_i + \epsilon_i 
+\beta_0 + \beta_1 \mbox{carat}_i + \beta_2 \mbox{good}_i + \beta_3 \mbox{very good}_i + \beta_4 \mbox{premium}_i + \beta_5 \mbox{ideal}_i + \epsilon_i 
 $$
 When `cut` is fair and good we get (respectively) 
 
@@ -559,6 +559,21 @@ Let's express them in the original scale. Fair -> Good increases price by 1.08 (
 power2= function(x) 2^x
 coefSummary(lmfit2, transform= power2)
 ```
+
+## gtsummary
+
+```{r}
+exp2 = function(x, ...) {  #custom function to exponentiate coef and CIs
+      broom::tidy(x, ...) |>
+      dplyr::mutate(estimate  = 2^estimate, conf.low  = 2^conf.low, conf.high = 2^conf.high)
+}
+
+tbl_regression(lmfit2, tidy_fun = exp2) |>
+  modify_fmt_fun(estimate  ~ function(x) sprintf("%.2f", x), #format to 2 decimal places
+                 conf.low  ~ function(x) sprintf("%.2f", x),
+                 conf.high ~ function(x) sprintf("%.2f", x))
+```
+
 
 
 ## Changing the reference category
@@ -934,9 +949,11 @@ Can you explain any of these patterns?
 
 - Extract inference from fitted model: `summary`, `confint`
 
-- Plot coefficients: `coefplot`, `multiplot`
+- Table with regression output: `coefSummary` (at `routines.R`), `tbl_summary` (package `gtsummary`)
 
-- Plot predictions: `data_grid`, `add_predictions`
+- Plot coefficients: `coefplot`, `multiplot` (package `coefplot`)
+
+- Plot predictions: `data_grid`, `add_predictions` (package `modelr`)
 
 - Diagnostics: `geom_smooth`, `geom_boxplot`, `geom_qq`
 
