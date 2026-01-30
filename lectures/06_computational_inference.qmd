@@ -104,7 +104,7 @@ Goal: estimate batting average in major league baseball games $\geq$ 1990
 - h: number of hits
 
 ```{r}
-baseball= baseball[baseball$year >= 1990, ]
+baseball= filter(baseball, year >= 1990, )
 head(baseball)
 ```
 
@@ -395,8 +395,7 @@ library(boot)
 library(fivethirtyeight)
 library(lmPerm)
 source("~/github/statcomp/code/routines.R")
-sel= c('state_abbrev','avg_hatecrimes_per_100k_fbi','share_vote_trump','gini_index','share_pop_hs')
-hc= hate_crimes[,sel]
+hc = select(hate_crimes, state_abbrev, avg_hatecrimes_per_100k_fbi, share_vote_trump, gini_index,share_pop_hs)
 names(hc)= c('state','hatecrimes_fbi','votes_trump','gini','hs')
 hc= filter(hc, !is.na(hatecrimes_fbi)) #outcome must be non-missing
 ```
