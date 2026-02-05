@@ -22,13 +22,11 @@ bibliography: references.bib
 
 # Lecture notes
 
-##
+## 
 
-Source code: `01_Basics.qmd` (quarto markdown) at [https://github.com/davidrusi/statcomp](https://github.com/davidrusi/statcomp)
+Source code: `01_Basics.qmd` (quarto markdown) at <https://github.com/davidrusi/statcomp>
 
-I recommend [GitHub Desktop](https://desktop.github.com) to pull the latest changes.
-See the [README](https://github.com/davidrusi/statcomp) on how to sync your local changes with the repository
-
+I recommend [GitHub Desktop](https://desktop.github.com) to pull the latest changes. See the [README](https://github.com/davidrusi/statcomp) on how to sync your local changes with the repository
 
 Required R packages
 
@@ -68,27 +66,25 @@ Statistical computing is one of its core components. We focus on R
 
 Note: Python more popular for Machine learning, lags a bit behind in Statistics
 
-
 ## Statistical computing
 
 Our definition of statistical computing
 
-- Includes programming, but is not just programming
+-   Includes programming, but is not just programming
 
-- Includes data analysis, but is not just data analysis
+-   Includes data analysis, but is not just data analysis
 
 A road map
 
-- Data visualization & manipulation
+-   Data visualization & manipulation
 
-- Models for continuous/binary/count data, interpretation, model-checking
+-   Models for continuous/binary/count data, interpretation, model-checking
 
-- Computationally-intensive methods for inference (to relax assumptions)
+-   Computationally-intensive methods for inference (to relax assumptions)
 
-- Foundations of machine learning
+-   Foundations of machine learning
 
-- Interactive reports
-
+-   Interactive reports
 
 ## Resources
 
@@ -107,7 +103,6 @@ Alternatively, [posit cloud](https://posit.cloud) has a free plan
 -   RStudio [books](https://www.rstudio.com/resources/books)
 
 -   Jared Lander's *R for everyone*
-
 
 ## Get RStudio started
 
@@ -131,30 +126,27 @@ Markdown/quarto combine text and R code. Compile into html/pdf/word
 
 -   In quarto you can combine R, Python & Julia code
 
-
 ## Enabling GitHub copilot
 
 Pre-requisites
 
-- Get an account at GitHub.com
+-   Get an account at GitHub.com
 
-- Copilot access. Get a free [GitHub Student developer pack](https://education.github.com/pack)
+-   Copilot access. Get a free [GitHub Student developer pack](https://education.github.com/pack)
 
 Activate copilot in RStudio
 
-1. Go to Tools -> Global Options...
+1.  Go to Tools -\> Global Options...
 
-2. In the left menu, click `Copilot`. Then `Enable GitHub Copilot`
+2.  In the left menu, click `Copilot`. Then `Enable GitHub Copilot`
 
-3. Click the `Sign In` button. Follow the steps to authenticate with GitHub. Once done, click OK to close the Global Options dialog
+3.  Click the `Sign In` button. Follow the steps to authenticate with GitHub. Once done, click OK to close the Global Options dialog
 
 Alternatively, use your favorite AI (e.g. ChatGPT, Gemini, etc) on the browser
 
-
-
 ## Copilot example
 
-Create a new R script (File -> New file -> R script)
+Create a new R script (File -\> New file -\> R script)
 
 Type the following line
 
@@ -164,12 +156,10 @@ Type the following line
 
 Place the cursor at the end of the line and wait a few seconds. Copilot should suggest the code below. Press Tab to accept it.
 
-
-:::panel-tabset 
-
+::: panel-tabset
 ### Code
 
-```{r, eval=FALSE}
+```{r, eval=FALSE} #eval: mostrar el código pero no ejecutarlo}
 # Load necessary library
 library(ggplot2)
 # Load the mtcars dataset
@@ -182,11 +172,10 @@ ggplot(mtcars, aes(x = hp, y = mpg)) +
        y = "Miles per Gallon (mpg)") +
   theme_minimal()
 ```
-
 
 ### Plot
 
-```{r, echo=FALSE}
+```{r, echo=FALSE} #ejecutar código pero no mostrarlo}
 # Load necessary library
 library(ggplot2)
 # Load the mtcars dataset
@@ -199,21 +188,17 @@ ggplot(mtcars, aes(x = hp, y = mpg)) +
        y = "Miles per Gallon (mpg)") +
   theme_minimal()
 ```
-
 :::
-
 
 ## An alternative editor
 
 [Visual Studio Code](https://code.visualstudio.com) is a free, open-source, multi-language code editor
 
-- Great integration with AI tools, including GitHub copilot
+-   Great integration with AI tools, including GitHub copilot
 
-- Great for advanced debugging, version control, R packages using C++
+-   Great for advanced debugging, version control, R packages using C++
 
-Setup instructions for
-[R in Visual Studio Code](https://code.visualstudio.com/docs/languages/r)
-
+Setup instructions for [R in Visual Studio Code](https://code.visualstudio.com/docs/languages/r)
 
 # First examples
 
@@ -223,7 +208,7 @@ Setup instructions for
 
 Let's dive in! We load dataset `starwars` included in package `dplyr`
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE} #ocultar warnings y mensajes}
 starwars
 ```
 
@@ -235,10 +220,8 @@ Scatterplots help reveal trends, and **outliers**
 
 ```{r}
 par(mar = c(4, 4, 1, .1)) #set plot margins (amount of white space)
-plot(starwars$height, starwars$mass, xlab='Height (cm)', ylab='Mass (kg)')
+plot(starwars$height, starwars$mass, xlab='Height (cm)', ylab='Mass (kg)') 
 ```
-
-## 
 
 Same figure, now using `ggplot` (to be discussed)
 
@@ -261,7 +244,7 @@ fk= student_survey$first_kiss
 
 Let's first use R's basic function `hist`
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
 ```{r histkiss}
 hist(fk,xlab='Years',main=tt)
@@ -273,7 +256,7 @@ hist(fk,xlab='Years',main=tt)
 hist(fk,prob=TRUE,xlab='Years',main=tt)
 ```
 :::
-:::
+:::::
 
 ------------------------------------------------------------------------
 
@@ -318,19 +301,18 @@ as.character(z)
 ```
 
 ```{r}
-sel= (z > 5) #create a logical vector
+sel= (z > 5) #create a logical vector if numbers > 5 
 sel
 which(sel) #return indices of TRUE values
 ```
-
 
 ```{r}
 sel + 1  #logical vectors are internally 0/1's
 ```
 
 ```{r}
-any(z > 5)
-all(z > 5)
+any(z > 5) #true si al menos uno cumple
+all(z > 5) #true si todos cumplen
 ```
 
 ------------------------------------------------------------------------
@@ -356,15 +338,13 @@ nchar(x)       #number of characters
 grep('Lo', x)  #entries containing string 'Lo'
 ```
 
-Factors are designed for categorical variables.
-They're treated differently by many R functions, e.g. regression models
+Factors are designed for categorical variables. They're treated differently by many R functions, e.g. regression models
 
 ```{r}
 xf= factor(x)
 xf
 table(xf)
 ```
-
 
 ## Factor basics
 
@@ -385,7 +365,7 @@ mo  #values stay the same
 table(mo) #table printed in rearranged order
 ```
 
----
+------------------------------------------------------------------------
 
 Keep top 3 categories, group others
 
@@ -406,10 +386,6 @@ season= fct_collapse(m,
 table(season)
 ```
 
-
-
-
-
 ## Missing values
 
 ```{r, error=TRUE}
@@ -423,16 +399,16 @@ is.na(x)
 
 ## Pipes
 
-- Base R: `|>` (newer, simpler options)
-- magrittr package: `%>%` (advanced options)
+-   Base R: `|>` (newer, simpler options)
+-   magrittr package: `%>%` (advanced options)
 
 Both take the output of an expression and insert it as the 1st argument of the function on the right-hand side. That is, `x |> f()` is the same as `f(x)`
-
 
 ```{r}
 x= 1:10; mean(x)
 x |> mean()
 ```
+
 Multiple pipes can be concatenated. Sometimes pipes save programming effort, some people find them easier to read (e.g. the [tidyverse](https://www.tidyverse.org) uses lots of pipes)
 
 ```{r}
@@ -451,7 +427,6 @@ You can pass the output to an argument other than the first
 ```
 
 The Rstudio shortcut to insert the pipe is ctrl + shift + m. To use `|>` instead of `%>%` go to `Tools -> Global options -> Code -> "Use native pipe operator"`
-
 
 ## Data structures
 
@@ -486,7 +461,6 @@ m + c(0,1,2)
 
 Similar to matrix, but columns may be of different types
 
-
 ```{r}
 mdf= as.data.frame(m); mdf$name= c('Laura','Paul','Lyz')
 mdf
@@ -499,16 +473,15 @@ mdf[,'name']  #access column as in a matrix
 mdf[,4]       #access column by index
 ```
 
-
 ## tibbles
 
 The class `tibble` extends `data.frame`
 
-- All operations that work on data frames work on tibbles
+-   All operations that work on data frames work on tibbles
 
-- Tibbles have some extra operations (methods)
+-   Tibbles have some extra operations (methods)
 
-- `as_tibble` converts a matrix/data frame into a tibble
+-   `as_tibble` converts a matrix/data frame into a tibble
 
 For now, let's just say that tibbles print prettier on the screen (just a few rows are shown, info is given on each column)
 
@@ -516,7 +489,6 @@ For now, let's just say that tibbles print prettier on the screen (just a few ro
 mtbl= as_tibble(mdf)
 mtbl
 ```
-
 
 ## Lists
 
@@ -540,18 +512,13 @@ cbind(1,x)
 
 ## Exercise
 
-In the `starwars` data we saw an outlier in mass. Select the character (row) such that
-mass is not missing and mass >500 kg
+In the `starwars` data we saw an outlier in mass. Select the character (row) such that mass is not missing and mass \>500 kg
 
-- What is its name and home world?
+-   What is its name and home world?
 
-- In which films did (s)he appear? (note: variable `starwars$films` is a list)
+-   In which films did (s)he appear? (note: variable `starwars$films` is a list)
 
 ```{r}
 par(mar = c(4, 4, 1, .1))
 plot(starwars$height, starwars$mass, xlab='Height (cm)', ylab='Mass (kg)')
 ```
-
-
-
-
