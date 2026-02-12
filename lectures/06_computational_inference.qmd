@@ -16,7 +16,7 @@ mouse-wheel: true
 code-overflow: scroll
 code-line-numbers: false
 code-copy: true
-cache: true
+cache: false
 title-slide-style: pandoc
 bibliography: references.bib
 ---
@@ -547,12 +547,47 @@ fit1= lm(Murder~Population + Illiteracy+Income+Frost, data=states)
 coefSummary(fit1)
 ```
 
+
+---
+
+Always plot the data first!
+
+:::panel-tabset
+
+### raw data
+
+```{r, message=FALSE}
+ggplot(states, aes(x=Population, y=Murder)) +
+  geom_point() +
+  geom_smooth()
+```
+
+### log-transform
+
+```{r, message=FALSE}
+ggplot(states, aes(x=Population, y=Murder)) +
+  geom_point() +
+  geom_smooth() +
+  scale_x_log10()
+```
+
+:::
+
+---
+
+```{r}
+states= transform(states, population_log10= log10(Population))
+fit1= lm(Murder~ population_log10 + Illiteracy+Income+Frost, data=states)
+coefSummary(fit1)
+```
+
+
 ---
 
 Package `lmPerm` offers a permutation test for regression
 
 ```{r}
-fit2= lmp(Murder ~ Population + Illiteracy + Income + Frost, data=states)
+fit2= lmp(Murder ~ population_log10 + Illiteracy + Income + Frost, data=states)
 summary(fit2)
 ```
 
@@ -619,12 +654,12 @@ lmResPerm.onevar= function(y, x1, x2, B=5000) {
 Obtain a residual permutation P-value  for Population
 
 ```{r}
-y= states$Murder; x1= states$Population; x2= states[,c('Illiteracy','Income','Frost')]
+y= states$Murder; x1= states$population_log10; x2= states[,c('Illiteracy','Income','Frost')]
 bperm= lmResPerm.onevar(y, x1, x2, B=5000)
 ```
 
 ```{r}
-bobs= coef(fit1)['Population']
+bobs= coef(fit1)['population_log10']
 pvalue= mean(abs(bperm) > abs(bobs))
 pvalue
 ```
@@ -632,7 +667,7 @@ pvalue
 Now for all covariates (`lmResPerm` is in routines.R)
 
 ```{r}
-x= cbind(Population=x1, x2)
+x= cbind(population_log10=x1, x2)
 fit1.resperm= lmResPerm(y, x, B=5000)
 fit1.resperm$pvalue
 ```
@@ -642,7 +677,6 @@ Recall the results from package `lmPerm`
 ```{r}
 summary(fit2)$coef
 ```
-
 
 ## Final remarks
 
