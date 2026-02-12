@@ -144,17 +144,52 @@ email
 
 :::panel-tabset
 
-### Spam vs. Number char.
+### Characters
 
 ```{r}
-ggplot(email, aes(x=spam, y=num_char)) + geom_violin()
+#| code-fold: true
+ggplot(email, aes(x=spam, y=num_char)) + 
+  geom_violin() + 
+  labs(y="Number of characters")
 ```
 
-### Spam vs. Re: in subject
+
+### Characters (log)
 
 ```{r}
-ggplot(email) + geom_bar(aes(x=spam, y=after_stat(prop), group=1)) + facet_wrap(~ re_subj)
+#| code-fold: true
+ggplot(email, aes(x=spam, y=num_char)) + 
+  geom_violin() + 
+  labs(y="Number of characters") +
+  scale_y_log10()
 ```
+
+### Re: in subject
+
+```{r}
+#| code-fold: true
+email = mutate(email, re_subj_txt= ifelse(re_subj == 1, "Re:", "No Re:"))
+ggplot(email) + 
+  geom_bar(aes(x=spam, y=after_stat(prop), group=1)) + 
+  facet_wrap(~ re_subj_txt) +
+  labs(y= "Proportion of emails that are spam", x="Is the email spam?", title="Re: in email's subject")
+```
+
+### Characters & Re:
+
+```{r}
+#| code-fold: true
+spam_proportion <- transform(email, num_char_disc= cut_number(num_char, 5)) |>
+  group_by(num_char_disc, re_subj) |>
+  summarize(spam= mean(spam == '1'))
+
+ggplot(spam_proportion, aes(x=num_char_disc, y=spam, color=re_subj)) + 
+  geom_point() +
+  labs(x="Number of characters", color="Re: in subject", y="Proportion of spam emails") +
+  theme(legend.position= c(0.8,0.8))
+```
+
+
 :::
 
 
@@ -249,8 +284,7 @@ Display effect of 1 covariate, keeping others constant
 ```{r}
 expit= function(x) 1/(1+exp(-x)) #inverse of logit function
 fitpred= data_grid(email, num_char, .model=fit) |>
-  add_predictions(fit) |>
-  mutate(predprob= expit(pred))
+  add_predictions(fit, type="response")
 fitpred
 ```
 
@@ -260,7 +294,7 @@ fitpred
 ## Marginal plots
 
 ```{r}
-ggplot(fitpred, aes(num_char, predprob)) + geom_line()
+ggplot(fitpred, aes(num_char, pred)) + geom_line() + labs(x="Number of characters", y="Estimated spam probability")
 ```
 
 ## Marginal plots
@@ -282,15 +316,14 @@ fitnum= glm(spam ~ num_char + re_subj1, data=emailnum, family=binomial())
 
 m= mean(emailnum$re_subj1)
 fitpred= data_grid(emailnum, num_char, re_subj1=m, .model=fitnum) |>
-  add_predictions(fitnum)
-fitpred$predprob= expit(fitpred$pred)
+  add_predictions(fitnum, type="response")
 fitpred
 ```
 
 ---
 
 ```{r}
-ggplot(fitpred, aes(num_char, predprob)) + 
+ggplot(fitpred, aes(num_char, pred)) + 
   geom_line() + 
   labs(x="Number of characters", y="Estimated spam probability")
 ```
@@ -303,11 +336,11 @@ ggplot(fitpred, aes(num_char, predprob)) +
 Fit a model with an interaction `numchar:re_subj`.
 For what value of `re_subj` is the estimated effect of `numchar` stronger?
 
-What's the estimated odds ratio for +10 characters
+What's the estimated odds ratio for +10 characters within:
 
-- For the group where `re_subj` is 0?
+- The group where `re_subj` is 0?
 
-- For the group where `re_subj` is 1?
+- The group where `re_subj` is 1?
 
 Is the interaction statistically significant (at the usual 0.05 level)?
 
@@ -323,7 +356,6 @@ Getting started
 ```{r}
 library(tidyverse)
 library(openintro)
-source("../code/routines.R")
 email
 ```
 
